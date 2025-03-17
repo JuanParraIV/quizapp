@@ -183,9 +183,9 @@ jobs:
     - name: Build and push frontend Docker image
       working-directory: ./frontend
       run: |
-        docker build . -t ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE}}:${{ env.FRONTEND_VERSION }}
         echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin 
-        docker push ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE}}:${{ env.FRONTEND_VERSION }}     
+        docker build . -t ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE}}:${{ env.FRONTEND_VERSION }}
+        docker push docker.io/${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE}}:${{ env.FRONTEND_VERSION }}     
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
