@@ -11,23 +11,31 @@ env:
 jobs:
   set-env-vars:
     runs-on: ubuntu-latest
+    outputs:
+      FRONTEND_IMAGE: ${{ steps.set-frontend-image.outputs.FRONTEND_IMAGE }}
+      FRONTEND_VERSION: ${{ steps.set-frontend-version.outputs.FRONTEND_VERSION }}
+      BACKEND_IMAGE: ${{ steps.set-backend-image.outputs.BACKEND_IMAGE }}
+      BACKEND_VERSION: ${{ steps.set-backend-version.outputs.BACKEND_VERSION }}
     steps:
       - name: Check-out git repository  
         uses: actions/checkout@v4
 
-      - name: Set frontend image and version
-        run: |
-          FRONTEND_IMAGE=$(jq -r '.name' frontend/package.json)
-          FRONTEND_VERSION=$(jq -r '.version' frontend/package.json)
-          echo "FRONTEND_IMAGE=$FRONTEND_IMAGE" >> $GITHUB_ENV
-          echo "FRONTEND_VERSION=$FRONTEND_VERSION" >> $GITHUB_ENV
+      - name: Set frontend image
+        id: set-frontend-image
+        run: echo "FRONTEND_IMAGE=$(jq -r '.name' frontend/package.json)" >> $GITHUB_ENV
 
-      - name: Set backend image and version
-        run: |
-          BACKEND_IMAGE=$(jq -r '.name' backend/package.json)
-          BACKEND_VERSION=$(jq -r '.version' backend/package.json)
-          echo "BACKEND_IMAGE=$BACKEND_IMAGE" >> $GITHUB_ENV
-          echo "BACKEND_VERSION=$BACKEND_VERSION" >> $GITHUB_ENV
+      - name: Set frontend version
+        id: set-frontend-version
+        run: echo "FRONTEND_VERSION=$(jq -r '.version' frontend/package.json)" >> $GITHUB_ENV
+
+      - name: Set backend image
+        id: set-backend-image
+        run: echo "BACKEND_IMAGE=$(jq -r '.name' backend/package.json)" >> $GITHUB_ENV
+
+      - name: Set backend version
+        id: set-backend-version
+        run: echo "BACKEND_VERSION=$(jq -r '.version' backend/package.json)" >> $GITHUB_ENV
+
   frontend-test:
     runs-on: ubuntu-latest
     defaults:
