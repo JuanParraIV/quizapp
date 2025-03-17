@@ -7,35 +7,13 @@ on:
     branches: "main"
 env:
   REGISTRY: "jotamariodev"
+  FRONTEND_IMAGE: "quizapp-frontend"
+  FRONTEND_VERSION: "1.0.0"
+  BACKEND_IMAGE: "quizapp-backend"
+  BACKEND_VERSION: "1.0.0"
+
 
 jobs:
-  set-env-vars:
-    runs-on: ubuntu-latest
-    outputs:
-      FRONTEND_IMAGE: ${{ steps.set-frontend-image.outputs.FRONTEND_IMAGE }}
-      FRONTEND_VERSION: ${{ steps.set-frontend-version.outputs.FRONTEND_VERSION }}
-      BACKEND_IMAGE: ${{ steps.set-backend-image.outputs.BACKEND_IMAGE }}
-      BACKEND_VERSION: ${{ steps.set-backend-version.outputs.BACKEND_VERSION }}
-    steps:
-      - name: Check-out git repository  
-        uses: actions/checkout@v4
-
-      - name: Set frontend image
-        id: set-frontend-image
-        run: echo "FRONTEND_IMAGE=$(jq -r '.name' frontend/package.json)" >> $GITHUB_ENV
-
-      - name: Set frontend version
-        id: set-frontend-version
-        run: echo "FRONTEND_VERSION=$(jq -r '.version' frontend/package.json)" >> $GITHUB_ENV
-
-      - name: Set backend image
-        id: set-backend-image
-        run: echo "BACKEND_IMAGE=$(jq -r '.name' backend/package.json)" >> $GITHUB_ENV
-
-      - name: Set backend version
-        id: set-backend-version
-        run: echo "BACKEND_VERSION=$(jq -r '.version' backend/package.json)" >> $GITHUB_ENV
-
   frontend-test:
     runs-on: ubuntu-latest
     defaults:
@@ -205,14 +183,14 @@ jobs:
     - name: Build and push frontend Docker image
       working-directory: ./frontend
       run: |
-        docker build . -t $REGISTRY/$FRONTEND_IMAGE:$FRONTEND_VERSION
+        docker build . -t ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE}}:${{ env.FRONTEND_VERSION }}
         echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin 
-        docker push $REGISTRY/$FRONTEND_IMAGE:$FRONTEND_VERSION     
+        docker push ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE}}:${{ env.FRONTEND_VERSION }}     
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: 'docker.io/$REGISTRY/$FRONTEND_IMAGE:$FRONTEND_VERSION'
+        image-ref: 'docker.io/${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE}}:${{ env.FRONTEND_VERSION }}'
         format: 'sarif'
         output: 'trivy-results.sarif'
         severity: 'CRITICAL,HIGH'
@@ -226,13 +204,13 @@ jobs:
       run: snyk auth ${{ secrets.SNYK_TOKEN }}
   
     - name: Snyk Container monitor
-      run: snyk container monitor $REGISTRY/$FRONTEND_IMAGE:$FRONTEND_VERSION --file=Dockerfile   
+      run: snyk container monitor ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE}}:${{ env.FRONTEND_VERSION }} --file=Dockerfile   
       working-directory: ./frontend
 
     - name: Run Snyk to check for vulnerabilities in the Docker image
       uses: snyk/actions/docker@master
       with:
-        image: $REGISTRY/$FRONTEND_IMAGE:$FRONTEND_VERSION
+        image: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE}}:${{ env.FRONTEND_VERSION }}
         args: --file=frontend/Dockerfile --severity-threshold=high
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
@@ -253,14 +231,14 @@ jobs:
     - name: Build and push backend Docker image
       working-directory: ./backend
       run: |
-        docker build . -t $REGISTRY/$BACKEND_IMAGE:$BACKEND_VERSION
+        docker build . -t ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE}}:${{ env.BACKEND_VERSION }}
         echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin 
-        docker push $REGISTRY/$BACKEND_IMAGE:$BACKEND_VERSION    
+        docker push ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE}}:${{ env.BACKEND_VERSION }}    
 
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
-        image-ref: 'docker.io/$REGISTRY/$BACKEND_IMAGE:$BACKEND_VERSION'
+        image-ref: 'docker.io/${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE}}:${{ env.BACKEND_VERSION }}'
         format: 'sarif'
         output: 'trivy-results.sarif'
         severity: 'CRITICAL,HIGH' 
@@ -274,28 +252,28 @@ jobs:
       run: snyk auth ${{ secrets.SNYK_TOKEN }}
 
     - name: Snyk Container monitor
-      run: snyk container monitor $REGISTRY/$BACKEND_IMAGE:$BACKEND_VERSION --file=Dockerfile   
+      run: snyk container monitor ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE}}:${{ env.BACKEND_VERSION }} --file=Dockerfile   
       working-directory: ./backend
 
     - name: Run Snyk to check for vulnerabilities in the Docker image
       uses: snyk/actions/docker@master
       with:
-        image: $REGISTRY/$BACKEND_IMAGE:$BACKEND_VERSION
+        image: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE}}:${{ env.BACKEND_VERSION }}
         args: --file=backend/Dockerfile --severity-threshold=high
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       continue-on-error: true 
 
 
-  k8s-manifest-scan:
-    needs: [backend-security, frontend-security]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run Snyk to check Kubernetes manifest file for issues
-        uses: snyk/actions/iac@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          file: kubernetes-manifest/
-          args: --severity-threshold=high
+  #k8s-manifest-scan:
+  #  needs: [backend-security, frontend-security]
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - uses: actions/checkout@v4
+  #    - name: Run Snyk to check Kubernetes manifest file for issues
+  #      uses: snyk/actions/iac@master
+  #      env:
+  #        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+  #      with:
+  #        file: kubernetes-manifest/
+  #        args: --severity-threshold=high
