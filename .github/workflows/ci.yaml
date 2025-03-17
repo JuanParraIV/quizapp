@@ -75,6 +75,7 @@ jobs:
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.host.url=${{ secrets.SONAR_URL }}
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.branch.name=main
             -Dsonar.sources=src/
             -Dsonar.verbose=true
         
@@ -121,6 +122,7 @@ jobs:
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.host.url=${{ secrets.SONAR_URL }}
             -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.branch.name=main
             -Dsonar.sources=.
             -Dsonar.verbose=true
           
