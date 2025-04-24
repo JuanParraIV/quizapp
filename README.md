@@ -64,8 +64,6 @@ Before starting this project, ensure you have the following prerequisites:
 cd ~/.ssh
 ssh-keygen
 ```
-![Screenshot 2024-02-28 at 9 22 06 AM](https://github.com/cloudcore-hub/Kubernetes-DevSecOps-CI-CD-Project/assets/88560609/6fdcda62-9178-45c2-a1d6-bc7cf778cd78)
-
 
 Give the key a name **key**. Then list **ls** the content of .ssh/ folder.
 
